@@ -1,0 +1,9 @@
+name =  ILAO SMS Surveys
+description = Adds support for SMS campaigns
+package = ILAO
+version = 1.0
+core = 7.x
+dependencies[] = ilao_sms
+dependencies[] = twilio
+files[] = ilao_sms_campaigns.ui.inc
+files[] = ilao_sms_campaigns_keywords.ui.inc

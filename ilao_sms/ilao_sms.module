@@ -1,0 +1,904 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: gdaniels
+ * Date: 5/16/17
+ * Time: 8:43 AM
+ */
+
+
+
+/**
+ * Implements hook_entity_info().
+ */
+function ilao_sms_entity_info() {
+  $return['ilao_sms_message'] = array(
+    'label' => t('SMS messages'),
+    'entity class' => 'ILAOTextMessage',
+    'controller class' => 'ILAOTextMessageController',
+    'base table' => 'ilao_sms_message',
+    'fieldable' => FALSE,
+    'entity keys' => array(
+      'id' => 'message_id',
+    ),
+
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'ilao_sms_message_create',
+    'access callback' => 'ilao_sms_message_access',
+    'module' => 'ilao_sms',
+
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ *
+ * Exposes the ilao_sms_message properties to Views.
+ */
+function ilao_sms_entity_property_info()
+{
+  $info = array();
+  $info['ilao_sms_message']['properties']['message_id'] = array(
+  'label' => t('ID'),
+  'description' => t('The ID of the message'),
+  'type' => 'ilao_sms_message',
+  'schema field' => 'message_id',
+  );
+  $info['ilao_sms_message']['properties']['from_number'] = array(
+    'label' => t('From telephone number'),
+    'description' => t('The number the message was sent from'),
+    'type' => 'text',
+    'schema field' => 'from_number',
+  );
+  $info['ilao_sms_message']['properties']['to_number'] = array(
+    'label' => t('To telephone number'),
+    'description' => t('The number the message was sent to'),
+    'type' => 'text',
+    'schema field' => 'to_number',
+  );
+  $info['ilao_sms_message']['properties']['message'] = array(
+    'label' => t('Text message'),
+    'description' => t('The message sent/received'),
+    'type' => 'text',
+    'schema field' => 'message',
+  );
+  $info['ilao_sms_message']['properties']['message_type'] = array(
+    'label' => t('Text message type'),
+    'description' => t('The message type'),
+    'type' => 'text',
+    'schema field' => 'message_type',
+  );
+  $info['ilao_sms_message']['properties']['created'] = array(
+    'label' => t('Created'),
+    'description' => t('The date created'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+  $info['ilao_sms_message']['properties']['changed'] = array(
+    'label' => t('Updated'),
+    'description' => t('The date last updated'),
+    'type' => 'date',
+    'schema field' => 'changed',
+  );
+  $info['ilao_sms_message']['properties']['entity_id'] = array(
+    'label' => t('Keyword'),
+    'description' => t('The text keyword used'),
+    'type' => 'ilao_sms_keyword',
+    'schema field' => 'entity_id',
+  );
+  $info['ilao_sms_message']['properties']['entity_id_content'] = array(
+    'label' => t('Node ID'),
+    'description' => t('The content sent'),
+    'type' => 'node',
+    'schema field' => 'entity_id',
+  );
+  $info['ilao_sms_message']['properties']['language'] = array (
+    'label' => t('Language'),
+    'description' => t('The language sent'),
+    'type' => 'text',
+    'schema field' => 'language',
+  );
+  $info['ilao_sms_message']['properties']['uid'] = array (
+    'label' => t('User'),
+    'description' => t('The user sharing content'),
+    'type' => 'User',
+    'schema field' => 'uid'
+  );
+
+
+
+
+  return $info;
+
+}
+
+/**
+ * Implements hook_menu().
+ */
+function ilao_sms_menu() {
+  $items['admin/sms/configure'] = array(
+    'title' => 'SMS Configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ilao_sms_form'),
+    'access callback' => 'ilao_sms_access',
+    'file' => 'ilao_sms.ui.inc',
+    'file path' => drupal_get_path('module', 'ilao_sms'),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_access().
+ */
+function ilao_sms_access() {
+  return user_access('administer sms');
+}
+
+/**
+ * Implements hook_permission().
+ */
+function ilao_sms_permission() {
+  return array(
+    'administer sms' => array(
+      'title' => t('Administer SMS configuration'),
+      'description' => t('Configure SMS settings for Legal Server.'),
+    ),
+  );
+}
+
+/**
+ * Loads multiple messags.
+ *
+ * @param array $message_ids
+ *  Message ids to return
+ * @param array $conditions
+ * @param bool $reset
+ *
+ * @return mixed
+ */
+
+function ilao_sms_load_multiple($message_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('ilao_sms_message', $message_ids, $conditions, $reset);
+}
+
+
+/**
+ * Deletes a ilao_sms_message.
+ */
+function ilao_sms_delete(ILAOTextMessage $ilao_sms_message) {
+  $ilao_sms_message->delete();
+}
+
+
+/**
+ * Delete multiple ilao_sms_messages.
+ *
+ * @param $ilao_sms_message_ids
+ *   An array of ilao_sms_mesage IDs.
+ */
+function ilao_sms_delete_multiple(array $ilao_sms_message_ids) {
+  entity_get_controller('ilao_sms_message')->delete($ilao_sms_message_ids);
+}
+
+
+/**
+ * Create a ilao_sms_message object.
+ */
+function ilao_sms_message_create($values = array()) {
+  return entity_get_controller('ilao_sms_message')->create($values);
+}
+
+
+/**
+ * Saves a ilao_sms_message to the database.
+ *
+ * @param $ilao_sms_message
+ *   The ilao_sms_message object.
+ */
+function ilao_sms_message_save(ILAOTextMessage $ilao_sms_message) {
+  return $ilao_sms_message->save();
+}
+
+
+
+/**
+ * Menu title callback for showing individual entities
+ */
+function ilao_sms_page_title(ILAOTextMessage $ilao_sms_message){
+  $title = $ilao_sms_message->message_type . t(' message');
+  return $title;
+}
+
+
+/**
+ * Sets up content to show an individual ilao_sms_message.
+ */
+function ilao_sms_page_view($ilao_sms_message, $view_mode = 'full') {
+  $controller = entity_get_controller('ilao_sms_message');
+  $content = $controller->view(array($ilao_sms_message->message_id => $ilao_sms_message));
+  drupal_set_title($ilao_sms_message->message_id);
+  return $content;
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function ilao_sms_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'ilao_sms') . '/views',
+  );
+}
+
+
+/**
+ * Implement hook_theme().
+ */
+function ilao_sms_theme() {
+  return array(
+    'ilao_sms_add_list' => array(
+      'variables' => array('content' => array()),
+
+    ),
+    'ilao_sms_message' => array(
+      'render element' => 'elements',
+      'template' => 'ilao_sms_message',
+    ),
+
+
+
+  );
+}
+
+
+/**
+ * The class used for Text Message entities
+ */
+
+class ILAOTextMessage extends Entity {
+  public function __construct(array $values) {
+    parent::__construct($values, 'ilao_sms_message');
+  }
+  protected function defaultLabel() {
+    return $this->message;
+  }
+
+}
+
+
+/**
+ * The Controller for Text Message entities
+ */
+class ILAOTextMessageController extends EntityAPIControllerExportable {
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   * Create a model type - we first set up the values that are specific
+   * to our model type schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the model.
+   *
+   * @return
+   *   A object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+
+    $values += array(
+      'message_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'created' => REQUEST_TIME,
+      'changed' => REQUEST_TIME,
+    );
+    $message = parent::create($values);
+    return $message;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity, $transaction);
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+
+    return $content;
+  }
+
+
+}
+
+
+function ilao_sms_check_mode() {
+  $host = $_SERVER['HTTP_HOST'];
+  if (stripos($host,'ilao.dev') !== FALSE) {
+    $mode = variable_get('ilao_sms_demo_local');
+  }
+  if (stripos($host,'dev.ill') !== FALSE) {
+    $mode = variable_get('ilao_sms_demo_dev');
+  }
+  if (stripos($host,'staging.ill') !== FALSE) {
+    $mode = variable_get('ilao_sms_demo_staging');
+  }
+  if ($mode == 1) {
+    return 'demo';
+  }
+  return 'live';
+
+}
+
+function ilao_sms_get_demo_phone() {
+  return variable_get('ilao_sms_demo_phone');
+}
+
+/**
+ * Implements hook_twilio_sms_incoming().
+ *
+ * Single hook for all ilao_sms.  Use this to process based on type.
+ *
+ * Business rules:  No response for restricted keywords, numeric messages are
+ * treated as survey responses, alphanumeric messages are treated as campaign
+ * keywords if a keyword is found and as survey responses if the user had been
+ * working in a survey in the last 4 hours.  If no valid type is found, the
+ * response is considered Invalid and an error message is sent.
+ */
+function ilao_sms_twilio_sms_incoming($sms, $options)
+{
+  $number = $sms['number'];
+  $number_twilio = $sms['number_twilio'];
+  $message = strtolower($sms['message']);
+
+
+  //we only care about recent events
+  $hour_ago = strtotime('-4 hour');
+  $restricted_keywords = ilao_sms_get_restricted_keywords_array();
+  if (in_array($message, $restricted_keywords)) {
+    $msg_type = 'Restricted';
+    $opt_in = '';
+    if (strtolower($message) == 'stop' || strtolower($message) == 'unsubscribe') {
+      $opt_in = 0;
+
+    }
+    if (strtolower($message) == 'start') {
+      $opt_in = 1;
+    }
+    if (!empty($opt_in)) {
+      $user = ilao_sms_load_user_by_mobile_phone($number);
+      if (!empty($user)) {
+        foreach($user as $key => $value) {
+          $profile = entity_load_single($user[$key]->entity_type, $user[$key]->entity_id);
+          $profile->field_opt_in_sms['und'][$key]['value'] = $opt_in;
+          if ($user[$key]->entity_type == 'user') {
+            user_save($profile);
+          }
+          else {
+            $profile->save();
+          }
+        }
+      }
+    }
+  }
+
+  else {
+    $campaign_keyword = ilao_sms_campaigns_load_keyword_from_name($message);
+    switch ($campaign_keyword) {
+      case 'invalid':
+        $msg_type = 'Invalid';
+        break;
+      case 'numeric':
+        $msg_type = 'Survey';
+        break;
+      case '':
+        $msg_type = '';
+        break;
+      default:
+        $msg_type = 'Campaign';
+        break;
+    }
+
+    if ($msg_type == 'Survey' || $msg_type == 'Invalid') {
+      $query = 'Select * from ilao_sms_message where to_number = :number and changed >= :hour_ago and message_type in (:msg) order by created DESC Limit 1';
+      $last_sent_from_us = db_query($query, array(
+        ':number' => $number,
+        ':hour_ago' => $hour_ago,
+        ':msg' => array('oas_case_accepted','oas_initial','shared_content'),
+      ))->fetchAll();
+      $last = current($last_sent_from_us);
+      watchdog('ilao-oas','Last message was of type @type for id @id', array('@type' => $last->message_type,'@id' => $last->message_id), WATCHDOG_NOTICE);
+      if (empty($last_sent_from_us)) {
+        $msg_type = 'Invalid';
+      }
+      else {
+        $msg_type = 'Survey';
+      }
+
+    }
+
+    switch($msg_type) {
+      case 'Campaign' :
+        $campaign_keyword = ilao_sms_campaigns_load_keyword_from_name($message);
+        //if the keyword is found, respond with the right message
+        if (is_object($campaign_keyword)) {
+          if (get_class($campaign_keyword) == 'ILAOTextKeyword') {
+            ilao_sms_campaigns_record_incoming($sms, 'ILAOTextKeyword', $campaign_keyword->keyword_id);
+            ilao_sms_campaigns_send_message($sms, $campaign_keyword);
+          }
+        }
+        else {
+            ilao_sms_send_not_found_message($sms);
+        }
+        break;
+      case 'Invalid' :
+        ilao_sms_send_not_found_message($sms);
+        break;
+      case 'Survey' :
+        $last_message = current($last_sent_from_us);
+        ilao_sms_surveys_process_survey_incoming($number, $number_twilio, $message, $last_message);
+        break;
+      case 'Restricted' :
+
+        break;
+
+    }
+
+  }
+
+}
+
+function ilao_sms_load_user_by_mobile_phone($number) {
+  $query = 'Select * from field_data_field_mobile_phone where	field_mobile_phone_value = :number';
+  $result = db_query($query, array (':number' => $number))->fetchAll();
+  return $result;
+
+}
+
+
+/**
+ * Creates a shortened URL for a piece of content.
+ *
+ * @param $nid
+ *   node ID to be shortened.
+ * @return mixed
+ */
+
+function ilao_sms_create_link($nid, $language = 'en') {
+  if ($language == 'en') {
+    $node = 'https://www.illinoislegalaid.org/node/' . $nid;
+  }
+  else {
+    $node = 'https://www.illinoislegalaid.org/' .$language .'/node/' .$nid;
+  }
+  $long_url = drupal_get_path_alias($node);
+  $path = shurly_shorten($long_url);
+  $short_url = $path['shortUrl'];
+  return $short_url;
+}
+
+/**
+ * Formats the text of content blocks in a node into clean SMS text.
+ *
+ * @param $node
+ *   The node to be converted.
+ *
+ * @return mixed|string
+ *   The converted text.
+ */
+function ilao_sms_format_sms_from_node($node, $language = 'en') {
+  $response = $node->title_field[$language][0]['safe_value'];
+  $ctr = 0;
+  $is_text = ilao_sms_determine_content_type($node);
+
+  if ($is_text) {
+    foreach ($node->field_content_type[LANGUAGE_NONE] as $key => $value) {
+
+      $paragraphs_id = $value['value'];
+      $paragraphs = entity_load_single('paragraphs_item', $paragraphs_id);
+
+      if ($paragraphs->bundle == 'text_article' || $paragraphs->bundle == 'legal_bundle') {
+
+        $response = $response . ' ' . $paragraphs->field_body[$language][0]['value'];
+      }
+      if ($paragraphs->bundle == 'process_step') {
+        $ctr++;
+        $response = $response . ' Step ' . $ctr . ' ' . $paragraphs->field_title[$language][0]['value'];
+        $response = $response . ' ' . $paragraphs->field_body[$language][0]['value'];
+      }
+    }
+
+    $response = ilao_sms_fix_formatting($response);
+    return $response;
+  }
+  else {
+   $response = ilao_sms_create_link($node->nid);
+    return $response;
+  }
+}
+
+/**
+ * Returns whether or not a node contains disallowed paragraph bundles.
+ *
+ * @param $node
+ *   The node to check
+ * @return bool
+ */
+function ilao_sms_determine_content_type($node) {
+
+  $disallowed_bundles = array(
+    'static_form',
+    'video_content',
+    'teachme',
+    'link_not_form_',
+    'iicle_content',
+    'file_non_form_',
+    'automated_documents',
+   );
+  foreach($node->field_content_type[LANGUAGE_NONE] as $key => $value) {
+    $paragraphs_id = $value['value'];
+    $paragraphs = entity_load_single('paragraphs_item',$paragraphs_id);
+    if (in_array($paragraphs->bundle,$disallowed_bundles)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Reformats text to be more SMS friendly.
+ *
+ * Strips lexicon tags
+ * Reformats links to remove href tags
+ * Replaces header and paragraph tags with new lines
+ *
+ * @param $text
+ *   Text to be reformatted.
+ * @return mixed
+ *   Reformatted text.
+ */
+function ilao_sms_fix_formatting($text) {
+  $text = str_replace('[no-lexicon]','', $text);
+  $text = str_replace('[/no-lexicon]','', $text);
+  $text = str_replace('<a href="/node',' https://www.illinoislegalaid.org/node',$text);
+  $text = str_replace('<a href="es/node',' https://www.illinoislegalaid.org/es/node',$text);
+  $text = str_replace('<a href="',' ',$text);
+  $text = str_replace('">',' ',$text);
+  $text = str_replace('<p>'," \n ",$text);
+  $text = str_replace('<h3>'," \n ",$text);
+  $text = str_replace('<h4>'," \n ",$text);
+  $text = str_replace('<h5>'," \n ",$text);
+  $text = str_replace('&nbsp;'," ",$text);
+  $text = str_replace('<li>'," \n*",$text);
+  $text = str_replace('<ul>'," \n",$text);
+  $text = decode_entities($text);
+
+
+  $text = strip_tags($text);
+  return $text;
+}
+
+/**
+ * Creates the custom form for sharing legal content.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function ilao_sms_legal_content_sharing_form($form, &$form_state) {
+  global $user;
+
+  $account = user_load($user->uid);
+
+  $form['mobile'] = array (
+    '#type' => 'textfield',
+    '#title' => t('Mobile phone'),
+    '#default_value' => $account->field_mobile_phone[LANGUAGE_NONE][0]['value'],
+  );
+  $form['path'] = array(
+    '#type' => 'value',
+    '#value' => current_path(),
+  );
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $user->uid,
+  );
+  $is_text = ilao_sms_legal_content_get_formats(current_path());
+  if ($is_text) {
+    $form['type'] = array(
+      '#title' => 'How would you like the content delivered?',
+      '#type' => 'radios',
+      '#required' => TRUE,
+      '#options' => array(
+        'text' => t('Text of article'),
+        'link' => t('As a link'),
+      ),
+    );
+  }
+  else {
+    $form['type'] = array (
+      '#type' => 'value',
+      '#value' => 'link',
+    );
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#submit' => array('ilao_sms_legal_content_sharing_form_submit'),
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for the content sharing form.
+ * @param $form
+ * @param $form_state
+ */
+function ilao_sms_legal_content_sharing_form_submit($form, &$form_state) {
+  ilao_sms_prepare_legal_content($form_state['values']['mobile'],$form_state['values']['path'], $form_state['values']['type']);
+  drupal_set_message(t('The text has been sent'),'status');
+}
+
+/**
+ * Custom opt-in form for users who have not already opted in for SMS messages.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function ilao_sms_legal_content_opt_in_form($form, &$form_state) {
+  global $user;
+
+  $form['path'] = array(
+    '#type' => 'value',
+    '#value' => current_path(),
+  );
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $user->uid,
+  );
+  $form['heading'] = array (
+    '#type' => 'markup',
+    '#markup' => t('<h2 class="blue">Opt in for text messages</h2>')
+  );
+  $form['mobile'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Mobile phone'),
+  );
+  $form['opt_in'] = array(
+    '#type' => 'checkbox',
+    '#description' => t('I agree to get text messages about my requests, legal information and updates from Illinois Legal Aid Online (ILAO) at the phone number I entered on this form. I understand that my consent to get texts is not required to receive services from ILAO. I understand that I can stop getting messages at any time by texting STOP to 773-98-LEGAL. Standard text message and data rates apply. Not all carriers covered.'),
+    '#title' => t('Yes, text this to my mobile phone'),
+  );
+  $form['type'] = array(
+    '#title' => t('<h3>How would you like the information sent?</h3>'),
+    '#type' => 'radios',
+    '#options' => array (
+      'text' => t('Send me the full article'),
+      'link' => t('Send me a link to this page'),
+    ),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#submit' => array('ilao_sms_legal_content_opt_in_form_submit'),
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for opt in form.
+ *
+ * Saves the opt in information to the user's profile.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function ilao_sms_legal_content_opt_in_form_submit($form, &$form_state) {
+
+  $user = user_load($form_state['values']['uid']);
+  if (!empty($user)) {
+   $user->field_opt_in_sms[LANGUAGE_NONE][0]['value'] = $form_state['values']['opt_in'];
+   $user->field_mobile_phone[LANGUAGE_NONE][0]['value'] = $form_state['values']['mobile'];
+   user_save($user);
+  }
+
+  if ($form_state['values']['opt_in'] == 0) {
+    form_set_error('opt_in',t('Unless you opt in, we can not send text messages to your phone.'));
+  }
+  else {
+   ilao_sms_prepare_legal_content($form_state['values']['mobile'],$form_state['values']['path'], $form_state['values']['type']);
+    drupal_set_message(t('The text has been sent'),'status');
+  }
+
+
+}
+
+/**
+ * Returns whether the content referenced is text or not.
+ *
+ * @param $path
+ *   The page path.
+ * @return bool
+ */
+function ilao_sms_legal_content_get_formats($path) {
+  $path_exploded = explode('/',$path);
+  $nid = $path_exploded[1];
+  $node = node_load($nid);
+  $is_text = ilao_sms_determine_content_type($node);
+  return $is_text;
+}
+
+/**
+ * Returns the formatted text message for sharing legal content.
+ *
+ * @param $number
+ *   The to phone number.
+ * @param $path
+ *   The page path of the content to send
+ * @param $type
+ *   The type of content.
+ *
+ * @return null|string
+ */
+function  ilao_sms_prepare_legal_content($number, $path, $type) {
+  $path_exploded = explode('/',$path);
+  $nid = $path_exploded[1];
+  $node = node_load($nid);
+  global $language;
+
+  if ($type == 'link') {
+    $response = ilao_sms_create_link($nid, $language->language);
+
+  }
+  else {
+    $response = ilao_sms_format_sms_from_node($node, $language->language);
+  }
+  $new_response = t('Here is the information you requested: @title' ." \n", array(
+    '@title' => $node->title_field,
+  ));
+  $new_response .= $response;
+  $new_response .= " \n" .t('Need more help? Visit IllinoisLegalAid.org 24/7.');
+
+  if (!empty($number) && !empty($response)) {
+    ilao_sms_send_legal_content($new_response, $number, $node, $language->language);
+  }
+  else {
+    return $new_response;
+  }
+
+
+}
+
+/**
+ * Sends legal content.
+ *
+ * Creates the message entity to save the interaction and sends the formatted
+ * sms message to Twilio to send.
+ *
+ * @param $response
+ *   The message to send.
+ * @param $number
+ *   The number to send the message to.
+ * @param $node
+ *   The node associated with the message.
+ * @param null $langcode
+ *   The language code, if specified.
+ */
+function ilao_sms_send_legal_content($response, $number, $node, $langcode = null) {
+  //log
+  if ($langcode == null) {
+    global $language;
+    $langcode = $language->language;
+  }
+  global $user;
+  $message = ilao_sms_message_create(array());
+  $message->from_number = variable_get('twilio_number');
+  $message->to_number = $number;
+  $message->message = $response;
+  $message->message_type = 'content';
+  $message->entity_type = 'node';
+  $message->entity_id = $node->nid;
+  $message->bundle = $node->type;
+  $message->language = $langcode;
+  $message->uid = $user->uid;
+  ilao_sms_message_save($message);
+
+
+  twilio_send($number,$response);
+}
+
+/**
+ * Provides the block text for the sms block declared in ilao_blocks.
+ * @return string
+ */
+function ilao_sms_get_legal_content_block_text() {
+
+  $content = '<div id="smsModal" class="reveal-modal" data-reveal aria-labelledby="sms modal" aria-hidden="true" role="dialog">';
+  global $user;
+  $text = ilao_sms_prepare_legal_content(NULL,current_path(),'link');
+  if ($user->uid == 0) {
+
+    $content .=t('<a href="@login">Log in</a> or <a href="@register">register</a> to text this information to yourself',
+      array(
+        '@login' => '/user/login',
+        '@register' => '/user/register'
+      ));
+
+  }
+  else {
+    $account = user_load($user->uid);
+    if (empty($account->field_opt_in_sms[LANGUAGE_NONE][0]['value'])) {
+
+      //offer opt in to sms
+
+     $content .= drupal_render(drupal_get_form('ilao_sms_legal_content_opt_in_form'));
+    }
+    else {
+      $content .= drupal_render(drupal_get_form('ilao_sms_legal_content_sharing_form'));
+  }
+
+  }
+  $content .=t('<br />On a mobile device? Text using your messaging app:<a href="sms:?body=@text">Android</a> or <a href="sms:&amp;body=@text">iOS</a>',
+    array('@text' => $text));
+  $content .='<a class="close-reveal-modal" aria-label="Close">&#215;</a></div>';
+
+  return $content;
+}
+
+/**
+ * Handles the response for an invalid incoming text.
+ *
+ * When no other valid response is found, the system sends an invalid keyword.
+ * The invalid keyword is stored in our configuration.
+ *
+ * @param $sms
+ *   The incoming sms array.
+ */
+function ilao_sms_send_not_found_message($sms) {
+  global $user;
+  $message_text = variable_get('ilao_sms_keyword_not_found');
+  $message = ilao_sms_message_create(array());
+  $message->from_number = variable_get('twilio_number');
+  $message->to_number = $sms['number'];
+  $message->message = $message_text;
+  $message->message_type = 'Invalid keyword';
+  $message->uid = $user->uid;
+
+  ilao_sms_message_save($message);
+
+
+  twilio_send($sms['number'],$message_text);
+}
+
+/**
+ * Returns the list of restricted keywords as an array.
+ *
+ * Takes the data entered in the SMS configuration form and creates an array
+ * where every restricted keyword  is trimmed and converted to lower case.
+ *
+ * @return array
+ *   The array of restricted keywords.
+ */
+function ilao_sms_get_restricted_keywords_array() {
+  $keywords = strtolower(variable_get('ilao_sms_restricted_keywords'));
+  $restricted_keywords = explode(',',$keywords);
+  foreach($restricted_keywords as $key => $value) {
+    $restricted_keywords[$key] = trim($value);
+  }
+  return $restricted_keywords;
+}
+
+
+

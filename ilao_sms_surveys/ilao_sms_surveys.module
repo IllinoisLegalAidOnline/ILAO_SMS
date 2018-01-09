@@ -1,0 +1,792 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: gdaniels
+ * Date: 5/17/17
+ * Time: 8:13 AM
+ */
+
+
+/**
+ * Implements hook_entity_info().
+ */
+function ilao_sms_surveys_entity_info() {
+  $return['ilao_sms_surveys'] = array(
+    'label' => t('Text Surveys'),
+    'entity class' => 'ILAOTextSurvey',
+    'controller class' => 'ILAOTextSurveyController',
+    'base table' => 'ilao_sms_surveys',
+    'fieldable' => FALSE,
+    'entity keys' => array(
+      'id' => 'survey_id',
+    ),
+
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'ilao_sms_surveys_create',
+    'access callback' => 'ilao_sms_surveys_access',
+    'module' => 'ilao_sms_surveys',
+
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function ilao_sms_surveys_entity_property_info() {
+  $info = array();
+  $info['ilao_sms_surveys']['properties']['survey_id'] = array (
+    'label' => t('ID'),
+    'description' => t('The ID of the survey entity'),
+    'type' => 'ilao_sms_surveys',
+    'schema field' => 'survey_id',
+  );
+  $info['ilao_sms_surveys']['properties']['entity_id'] = array (
+    'label' => t('User'),
+    'description' => t('The ID of the  user'),
+    'type' => 'integer',
+    'schema field' => 'entity_id',
+  );
+  $info['ilao_sms_surveys']['properties']['entity_type'] = array (
+    'label' => t('User type (triage or user)'),
+    'description' => t('The entity type of the user'),
+    'type' => 'text',
+    'schema field' => 'entity_type',
+  );
+  $info['ilao_sms_surveys']['properties']['nid'] = array (
+    'label' => t('Survey id'),
+    'description' => t('The node id of the survey taken'),
+    'type' => 'node',
+    'schema field' => 'nid',
+  );
+  $info['ilao_sms_surveys']['properties']['submission'] = array (
+    'label' => t('Webform submission ID'),
+    'description' => t('The webform submission of the survey taken'),
+    'type' => 'integer',
+    'schema field' => 'submission_id',
+  );
+  $info['ilao_sms_surveys']['properties']['changed'] = array (
+    'label' => t('Updated'),
+    'description' => t('The date the survey entity was last changed'),
+    'type' => 'date',
+    'schema field' => 'changed',
+  );
+  $info['ilao_sms_surveys']['properties']['created'] = array (
+    'label' => t('Created'),
+    'description' => t('The date the survey was started'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_access().
+ */
+function ilao_sms_surveys_access() {
+  return ilao_sms_message_access();
+}
+
+
+function ilao_sms_surveys_load_multiple($survey_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('ilao_sms_surveys', $survey_ids, $conditions, $reset);
+}
+
+
+/**
+ * Deletes a ilao_sms_surveys.
+ */
+function ilao_sms_surveys_delete(ILAOTextSurvey $ilao_sms_surveys) {
+  $ilao_sms_surveys->delete();
+}
+
+
+/**
+ * Delete multiple ilao_sms_surveyss.
+ *
+ * @param $ilao_sms_surveys_ids
+ *   An array of ilao_sms_surveys IDs.
+ */
+function ilao_sms_surveys_delete_multiple(array $ilao_sms_surveys_ids) {
+  entity_get_controller('ilao_sms_surveys')->delete($ilao_sms_surveys_ids);
+}
+
+
+/**
+ * Create a ilao_sms_surveys object.
+ */
+function ilao_sms_surveys_create($values = array()) {
+  return entity_get_controller('ilao_sms_surveys')->create($values);
+}
+
+
+/**
+ * Saves a ilao_sms_surveys to the database.
+ *
+ * @param $ilao_sms_surveys
+ *   The ilao_sms_surveys object.
+ */
+function ilao_sms_surveys_save(ILAOTextSurvey $ilao_sms_surveys) {
+  return $ilao_sms_surveys->save();
+}
+
+
+
+/**
+ * Menu title callback for showing individual entities
+ */
+function ilao_sms_surveys_page_title(ILAOTextSurvey $ilao_sms_surveys){
+  return $ilao_sms_surveys->survey_id;
+}
+
+
+/**
+ * Sets up content to show an individual ilao_sms_surveys
+ * @todo - get rid of drupal_set_title();
+ */
+function ilao_sms_surveys_page_view($ilao_sms_surveys, $view_mode = 'full') {
+  $controller = entity_get_controller('ilao_sms_surveys');
+  $content = $controller->view(array($ilao_sms_surveys->survey_id => $ilao_sms_surveys));
+  drupal_set_title($ilao_sms_surveys->survey_id);
+  return $content;
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function ilao_sms_surveys_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'ilao_sms_surveys') . '/views',
+  );
+}
+
+
+/**
+ * Implement hook_theme().
+ */
+function ilao_sms_surveys_theme() {
+  return array(
+    'ilao_sms_surveys_add_list' => array(
+      'variables' => array('content' => array()),
+
+    ),
+    'ilao_sms_surveys' => array(
+      'render element' => 'elements',
+      'template' => 'ilao_sms_surveys',
+    ),
+
+
+
+  );
+}
+
+
+/**
+ * The class used for Text Survey entities
+ */
+
+class ILAOTextSurvey extends Entity {
+  public function __construct(array $values) {
+    parent::__construct($values, 'ilao_sms_surveys');
+  }
+  protected function defaultLabel() {
+    return $this->survey_id;
+  }
+
+}
+
+
+/**
+ * The Controller for Text survey entities
+ */
+class ILAOTextSurveyController extends EntityAPIControllerExportable {
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   * Create a model type - we first set up the values that are specific
+   * to our model type schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the model.
+   *
+   * @return
+   *   A object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+
+    $values += array(
+      'survey_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'created' => REQUEST_TIME,
+      'changed' => REQUEST_TIME,
+     );
+    $survey = parent::create($values);
+    return $survey;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity, $transaction);
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+
+    return $content;
+  }
+
+
+}
+
+
+
+/**
+ * Loads a specific question from a webform.
+ *
+ * @param $node
+ *   The node for the webform
+ * @param $component_id
+ *   The component id from the webform
+ *
+ * @return mixed
+ *   The text label from the question.
+ */
+function ilao_sms_surveys_load_question($node, $component_id) {
+  $question = $node->webform['components'][$component_id]['name'];
+  return $question;
+}
+
+/**
+ * Master function to process incoming survey
+ *
+ * @param $number
+ * @param $number_twilio
+ * @param $message
+ * @param $question
+ */
+function ilao_sms_surveys_process_survey_incoming($number, $number_twilio, $message, $question) {
+
+  watchdog('sms-ilao','Executing the process survey incoming', array(), WATCHDOG_NOTICE);
+  ilao_sms_surveys_save_message($number, $number_twilio, $message, 'survey response');
+  $nid = ilao_sms_surveys_get_survey_by_type($question->message_type);
+  $node = node_load($nid);
+
+  $last_question = ilao_sms_surveys_get_component_id_by_label($question->message, $node);
+  $count = ilao_sms_surveys_get_component_count($node);
+  watchdog('sms-ilao','The last question was @cid of @count', array('@cid' => $last_question, '@count' => $count), WATCHDOG_NOTICE);
+
+  if ($last_question == $count && 1 == 0) {
+    // do we need to update a survey object?
+
+     ilao_sms_surveys_save_webform($node, $number);
+
+
+  }
+  else {
+    $next = ilao_sms_surveys_get_next_question($node, $last_question, $message);
+    watchdog('sms-ilao','Next is @next', array ('@next' => $next), WATCHDOG_NOTICE);
+     if (!empty($next)) {
+      // need to actually send the next question.
+      //ilao_sms_surveys_send_survey()
+       ilao_sms_surveys_send_survey_question($node, $number, $next);
+       //If the type is markup, then we are done.
+       if ($node->webform['components'][$next]['type'] == 'markup') {
+         ilao_sms_surveys_save_webform($node, $number);
+       }
+    }
+    else {
+      //here is where we save the survey
+      ilao_sms_surveys_save_webform($node, $number);
+    }
+  }
+
+}
+
+/**
+ * Sends a specific survey question.
+ *
+ * @param $node
+ *   The node associated with the survey.
+ * @param $number
+ *   The to number.
+ * @param $cid
+ *   The webform component ID to send
+ */
+function ilao_sms_surveys_send_survey_question($node, $number, $cid) {
+  $question = ilao_sms_surveys_load_question($node, $cid);
+  watchdog('ilao-sms','the question is @question', array('@question' => $question), WATCHDOG_NOTICE);
+  if (!empty($question)) {
+    ilao_sms_surveys_save_message(variable_get('twilio_number'), $number, $question, $node->field_survey_type[LANGUAGE_NONE][0]['value']);
+    twilio_send($number, $question);
+  }
+  else {
+    $sms['number'] = $number;
+    ilao_sms_send_not_found_message($sms);
+  }
+
+}
+
+/**
+ * Gets the next question in the survey.
+ *
+ * Returns the immediate next question if there are no conditions and evaluates conditions to return the correct
+ * question if there are conditions in the webform.
+ *
+ * @param $node
+ *   The node of the survey
+ * @param $component
+ *   The current question
+ * @param $response
+ *   The response sent by the user
+ *
+ * @return string
+ *   The next question number.
+ */
+function ilao_sms_surveys_get_next_question($node, $component, $response) {
+
+  $has_conditionals = ilao_sms_surveys_has_conditions($node, $component, $response);
+  if (empty($has_conditionals)) {
+    $next = $component + 1;
+   watchdog('ilao-sms','No conditions; Component was @component; now is $next for nid @nid',array ('@component' => $component, 'next' => $next, '@nid' => $node->nid));
+  }
+  else {
+    $next = $has_conditionals;
+    watchdog('ilao-sms','Has conditions; Component was @component; now is $next for nid @nid',array ('@component' => $component, 'next' => $next, '@nid' => $node->nid));
+  }
+
+
+  return $next;
+
+}
+
+/**
+ * Evaluates webform conditions against a response for a specific component.
+ *
+ * Evaluates whether a specific component has conditions that need to be tested against the value and if so
+ * then tests the condition's value against the $value.
+ *
+ * @param $node
+ *   The node of the survey.
+ * @param $component
+ *   The component ID for the select component.
+ * @param $value
+ *   The response entered by the user to test against the condition.
+ *
+ * @return string
+ *   The target ID of a component if a condition exists and is met.  Empty otherwise.
+ */
+function ilao_sms_surveys_has_conditions($node, $component, $value) {
+  $meets = '';
+
+  foreach($node->webform['conditionals'] as $conditions) {
+
+    foreach ($conditions['rules'] as $rule) {
+      if ($rule['source'] == $component) {
+
+        $expected = trim(strtolower($rule['value']));
+        $response = trim(strtolower($value));
+        switch ($rule['operator']) {
+          case 'equal':
+             if ($expected == $response) {
+               $meets = $conditions['actions'][0]['target'];
+             }
+            break;
+          case 'not_equal':
+            if ($expected != $response) {
+              $meets = $conditions['actions'][0]['target'];
+            }
+            break;
+          case 'not_empty':
+            if (!empty($response)) {
+              $meets = $conditions['actions'][0]['target'];
+            break;
+          }
+        }
+      }
+    }
+  }
+  return $meets;
+}
+
+/**
+ * Returns a component ID from a webform based on the label/name.
+ *
+ * @param $label
+ *   Label of the component.
+ * @param $node
+ *   Node of the webform
+ *
+ * @return mixed
+ *   returns the matching component cid
+ */
+function ilao_sms_surveys_get_component_id_by_label($label, $node) {
+
+  foreach($node->webform['components'] as $component) {
+    if ($component['name'] == $label) {
+       return $component['cid'];
+    }
+  }
+  return null;
+}
+
+/**
+ * Returns the number of components on a webform.
+ *
+ * @param $node
+ *   The node for the webform
+ *
+ * @return int
+ *   The number of components.
+ */
+
+function ilao_sms_surveys_get_component_count($node) {
+  return count($node->webform['components']);
+}
+
+/**
+ * Returns the node id for a webform based on the survey type.
+ *
+ * @param $type
+ *   Survey type
+ * @return mixed
+ *   the node id or null.
+ */
+function ilao_sms_surveys_get_survey_by_type($type) {
+  $query = db_select('field_data_field_survey_type', 's')
+    ->fields('s')
+    ->condition('field_survey_type_value', $type, '=')
+    ->condition('entity_type', 'node', '=')
+    ->execute()
+    ->fetchAssoc();
+
+  if (!empty($query)) {
+    watchdog('ilao-sms','For @type the entity id is @id',array('@type' => $type, '@id' => $query['entity_id']), WATCHDOG_NOTICE);
+    return $query['entity_id'];
+  }
+  return null;
+
+}
+
+
+
+function ilao_sms_surveys_send_question_one($node, $number) {
+  $question = ilao_sms_surveys_load_question($node,1);
+  ilao_sms_surveys_save_message(variable_get('twilio_number'), $number, $question, $node->field_survey_type[LANGUAGE_NONE][0]['value']);
+  twilio_send($number, $question);
+
+}
+
+
+/**
+ * Creates an ilao_sms_message object and saves it with data from a sent or received survey message.
+ *
+ * @param $from
+ *   The number the messages was sent from.
+ * @param $to
+ *   The number the message was sent to.
+ * @param $message_text
+ *   The text of the message
+ * @param $survey
+ *   The survey type.
+ */
+function ilao_sms_surveys_save_message($from, $to, $message_text, $survey) {
+  $message = ilao_sms_message_create(array());
+  $message->from_number = $from;
+  $message->to_number = $to;
+  $message->message = $message_text;
+  $message->message_type = $survey;
+  ilao_sms_message_save($message);
+}
+
+/**
+ * Prepares texted data to be inserted into webform.
+ *
+ * @param $node
+ *   The webform.
+ * @param $number
+ *   The recipient's phone number.
+ */
+function ilao_sms_surveys_save_webform($node, $number) {
+
+  $query = 'Select * from ilao_sms_message where to_number = :number or from_number = :number order by created';
+  $result = db_query($query, array(':number' =>$number))->fetchAll();
+  $webform_result = "";
+  foreach($result as $key => $object) {
+
+    if ($object->message_type != 'survey response') {
+       $question = ilao_sms_surveys_get_component_id_by_label($object->message,$node);
+    }
+    else {
+      $webform_result[$question] = array($object->message);
+    }
+
+    //if the message_type is not survey response, load the survey
+    //if the message is not a question, store the answer in the survey object
+  }
+
+  $started = $object->created;
+  $ended = $object->changed;
+  //save the survey to webform
+  $saved_survey_id = ilao_sms_surveys_save_webform_submission($node, $webform_result, $started, $ended);
+  watchdog('survey','Saved survey id is @saved', array('@saved' => $saved_survey_id), WATCHDOG_NOTICE);
+  $survey_id = ilao_sms_surveys_get_survey_id_from_phone($number,$node->field_survey_type[LANGUAGE_NONE][0]['value']);
+  watchdog('survey','Saved survey object id is @saved', array('@saved' => $survey_id), WATCHDOG_NOTICE);
+  $survey = entity_load_single('ilao_sms_surveys',$survey_id);
+  $survey->submission_id = $saved_survey_id;
+  $survey->save();
+
+  //Need to find the survey object and update with the submission ID
+}
+
+/**
+ *  Inserts a completed survey to webform.
+ * @param $node
+ * @param $data
+ */
+function ilao_sms_surveys_save_webform_submission($node, $data, $started, $ended) {
+  if (module_exists('webform')) {
+    global $user;
+    module_load_include('inc', 'webform', 'webform.module');
+    module_load_include('inc', 'webform', 'includes/webform.submissions');
+
+    $submission = (object) array(
+      'nid' => $nid,
+      'uid' => $user->uid,
+      'sid' => NULL,
+      'submitted' => $started,
+      'completed' => $ended,
+      'remote_addr' => ip_address(),
+      'is_draft' => FALSE,
+      'data' => $data,
+    );
+
+    $sid = webform_submission_insert($node, $submission);
+    return $sid;
+  }
+}
+
+
+/**
+ * Implements hook_cronapi().
+ *
+ * Adds cron task for daily reminder.
+ * Adds cron task for hourly reminder at the top of the hour.
+ * Adds cron task for hourly reminder at the half hour.
+ */
+function ilao_sms_surveys_cronapi($op, $job = NULL)
+{
+  $items['Send oas initial survey'] = array(
+    'description' => 'Initial OAS survey',
+    'rule' => '5 9 * * *',
+    'weight' => 1,
+    'callback' => 'ilao_sms_surveys_send_survey',
+    'arguments' => array('oas_initial'),
+  );
+  /*
+  $items['Send oas case acceptance survey'] = array(
+    'description' => 'Case acceptance survey',
+    'rule' => '11 9 * * *',
+    'weight' => 1,
+    'callback' => 'ilao_sms_surveys_send_survey',
+    'arguments' => array('oas_case_accepted'),
+  );
+  $items['Send legal content survey'] = array(
+    'description' => 'Send legal content survey',
+    'rule' => '15 9 * * *',
+    'weight' => 1,
+    'callback' => 'ilao_sms_surveys_send_survey',
+    'arguments' => array('shared_content'),
+  );*/
+  return $items;
+}
+
+function ilao_sms_surveys_send_survey($survey_name) {
+  switch ($survey_name) {
+    case 'oas_initial':
+      $users = ilao_sms_surveys_load_oas_survey_users(variable_get('ilao_sms_oas_survey_send'));
+      ilao_sms_surveys_send_first_question($survey_name,$users, 'oas_triage_user');
+      break;
+    case 'oas_case_accepted':
+      break;
+    case 'shared_content':
+      $users = ilao_sms_surveys_load_content_sharers(variable_get('ilao_sms_content_survey_send'));
+      ilao_sms_surveys_send_first_question($survey_name, $users, 'user');
+      break;
+  }
+}
+
+function ilao_sms_surveys_load_content_sharers($days) {
+  $date = strtotime('-' .$days .' day');
+  $next_date = $days + 1;
+  $date2 = strtotime('-' .$next_date .' day');
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type','ilao_sms_message')
+    ->propertyCondition('message_type','content','=')
+  //  ->propertyCondition('changed', $date, '<=')
+ //   ->propertyCondition('changed', $date2, '>=')
+    ->addMetaData('account', user_load(1));
+  $result = $query->execute();
+  $users = array();
+  foreach(current($result) as $key => $value) {
+    $message = entity_load_single('ilao_sms_message',$value->message_id);
+    if (!empty($message->uid)) {
+      $users[$message->uid] = $message->to_number;
+    }
+  }
+  return $users;
+
+}
+
+function ilao_sms_surveys_load_oas_survey_users($days) {
+  $date = strtotime('-' .$days .' day');
+  $next_date = $days + 1;
+  $date2 = strtotime('-' .$next_date .' day');
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'oas_triage_user')
+    ->propertyCondition('intake_status', 'eTransferred', '=')
+    ->propertyCondition('intake_changed',$date,'<=')
+    ->propertyCondition('intake_changed',$date2,'>=')
+    ->fieldCondition('field_opt_in_sms','value',1)
+
+    // Run the query as user 1.
+    ->addMetaData('account', user_load(1));
+
+  $result = $query->execute();
+  $users = array();
+  foreach(current($result) as $key => $value ) {
+
+    $triage = entity_load_single('oas_triage_user',$value->triage_id);
+    $users[$triage->triage_id] = ilao_sms_surveys_clean_number($triage->field_mobile_phone[LANGUAGE_NONE][0]['value']);
+
+  }
+
+
+
+  return $users;
+
+}
+
+function ilao_sms_surveys_clean_number($number) {
+  $number = str_replace(' ','',$number);
+  $number = str_replace('-','',$number);
+  $number = str_replace('.','',$number);
+  return $number;
+}
+
+function ilao_sms_surveys_send_first_question($survey, $users, $user_type) {
+  $nid = ilao_sms_surveys_get_survey_by_type($survey);
+  if (!empty($nid)) {
+    $node = node_load($nid);
+    // if the survey has never been submitted, then we send the 1st question
+    $from = variable_get('twilio_number');
+    $message_start = 1;
+    $message = ilao_sms_surveys_load_question($node, $message_start);
+    foreach ($users as $key => $value) {
+      $to = $value;
+      ilao_sms_surveys_save_message($from, $to, $message, $node->field_survey_type[LANGUAGE_NONE][0]['value']);
+      ilao_sms_surveys_set_survey_object($key, $user_type, $nid, $to);
+      twilio_send($to, $message);
+
+    }
+  }
+
+
+}
+
+function ilao_sms_surveys_set_survey_object($user, $user_type, $nid, $to_number) {
+  $survey = array();
+  $survey['created'] = REQUEST_TIME;
+  $survey['changed'] = REQUEST_TIME;
+  $survey['entity_id'] = $user;
+  $survey['entity_type'] = $user_type;
+  $survey['nid'] = $nid;
+  $survey['submission_id'] = 0;
+  $survey['to_number'] = $to_number;
+  $survey_object  = ilao_sms_surveys_create($survey);
+  $survey_object->save();
+
+
+}
+/*
+
+function ilao_sms_surveys_send_survey($nid, $survey) {
+
+  $node = node_load($nid);
+  // if the survey has never been submitted, then we send the 1st question
+  $from = variable_get('twilio_number');
+  $to = '6308811337';
+
+
+
+  if (empty($survey->submission_id)) {
+    $survey->submission_id = 1;
+    $message_start = 1;
+
+
+  }
+  //if the survey has been submitted, we need to find the correct question to ask, if any
+  /*else {
+    dpm('here');
+    $number = variable_get('twilio_number');
+    $x = ilao_sms_twilio_sms_incoming('6308811337',$number,'pink');
+    $message_start = 2;
+
+  }*/
+/*
+  $message = ilao_sms_surveys_load_question($node,$message_start);
+  ilao_sms_surveys_save_message($from, $to, $message, $node->field_survey_type[LANGUAGE_NONE][0]['value']);
+  twilio_send($to, $message);
+
+
+
+}
+*/
+
+/**
+ * Returns the survey id associated with a survey.
+ *
+ * @param $number
+ *   The to number
+ * @param $survey_type
+ *   The type of survey
+ *
+ * @return mixed
+ */
+function ilao_sms_surveys_get_survey_id_from_phone($number, $survey_type) {
+  if (stripos($survey_type, 'oas_') !== FALSE) {
+    $entity_type = 'oas_triage_user';
+  }
+  else {
+    $entity_type = 'user';
+  }
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'ilao_sms_surveys')
+    ->propertyCondition('to_number', $number, '=')
+    ->propertyCondition('entity_type', $entity_type, '=')
+    ->propertyOrderBy('changed', 'DESC')
+    ->range(0, 1)
+    ->addMetaData('account', user_load(1));
+
+  $result = $query->execute();
+  if (!empty($result)) {
+    $result_array = current($result);
+    $survey = current($result_array);
+    return $survey->survey_id;
+  }
+}

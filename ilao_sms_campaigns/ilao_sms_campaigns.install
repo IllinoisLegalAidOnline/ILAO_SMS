@@ -1,0 +1,164 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ *
+ */
+function ilao_sms_campaigns_schema()
+{
+  $schema = array();
+
+  $schema['ilao_sms_campaign'] = array(
+    'description' => 'The base table for sms campaigns.',
+    'fields' => array(
+      'campaign_id' => array(
+        'description' => 'Primary Key: Identifier for campaign',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array (
+        'description' => 'Name of the campaign',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'Status of the campaign',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'uid' => array (
+        'description' => 'Author of the campaign',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the entity was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the entity was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('campaign_id'),
+  );
+
+  $schema['ilao_sms_keyword'] = array(
+    'description' => 'The base table for sms keywords.',
+    'fields' => array(
+      'keyword_id' => array(
+        'description' => 'Primary Key: Identifier for campaign keywords',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'keyword' => array(
+        'description' => 'Keyword',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'entity_id' => array(
+        'description' => 'Entity id of the referencing campaign',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => 'Entity type of the entity id',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'message_type' => array (
+        'description' => 'Type of message to deliver (text or node)',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'message_text' => array (
+        'description' => 'For text, message to send',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+      ),
+      'nid' => array (
+        'description' => 'Node id for messages of type node',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'node_content_type' => array (
+        'description' => 'whether to send the url or full text',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'node_prefix' => array (
+        'description' => 'prefix before node text',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+      ),
+      'node_suffix' => array (
+        'description' => 'suffix after node text',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => FALSE,
+      ),
+      'uid' => array (
+        'description' => 'Author of the keyword',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the entity was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the entity was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'language' => array (
+        'description' => 'Language requested',
+        'type' => 'varchar',
+        'length' => 2,
+        'not null' => FALSE,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+
+    ),
+    'primary key' => array('keyword_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function ilao_sms_campaigns_update_7001() {
+  module_enable(array('views_field_view'));
+}
+

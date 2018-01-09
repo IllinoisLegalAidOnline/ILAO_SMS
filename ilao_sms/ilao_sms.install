@@ -1,0 +1,163 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: gdaniels
+ * Date: 5/19/17
+ * Time: 10:38 AM
+ */
+
+
+/**
+ * Implements hook_schema().
+ *
+ */
+function ilao_sms_schema()
+{
+  $schema = array();
+
+  $schema['ilao_sms_message'] = array(
+    'description' => 'The base table for sms messages entities.',
+    'fields' => array(
+      'message_id' => array(
+        'description' => 'Primary Key: Identifier for a message sent or received',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the entity was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the entity was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'from_number' => array(
+        'description' => 'Number the message came from',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'to_number' => array(
+        'description' => 'Number the message was sent to',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'message_type' => array(
+        'description' => 'The type of message',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'entity_type' => array(
+        'description' => 'Entity type for the message type',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'entity_id' => array (
+        'description' => 'Entity id for the message type',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'bundle' => array (
+        'description' => 'Bundle of the referenced entity',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'message' => array (
+        'description' => 'Text of the message sent',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+     'uid' => array (
+       'description' => 'The user id of the user',
+       'type' => 'int',
+       'not null' => FALSE,
+      ),
+
+     'language' => array (
+       'description' => 'Language requested',
+       'type' => 'varchar',
+       'length' => 2,
+       'not null' => FALSE,
+     ),
+    ),
+    'primary key' => array('message_id'),
+  );
+  return $schema;
+}
+
+/**
+ * Removes initial test SMS data
+ */
+function ilao_sms_update_7001() {
+  $numbers = array (
+    '6308811337',
+    '3122066610',
+    '7736806928',
+    '7733985080',
+    '5052208413',
+    '5057503816',
+    '5203432100',
+    '5203336169',
+    '4064392518',
+    '9176532086',
+    '3235454904',
+    '4029601718',
+    '5315007310',
+    '5717650011',
+    '4023124326',
+    '3344627572',
+    '4047139705',
+    '3135951003',
+    '3128108393',
+    '2063843580',
+    '8656171872',
+    '7743130232',
+    '3152200254',
+    '7734692924'
+  );
+  foreach ($numbers as $number) {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'ilao_sms_message')
+      ->propertyCondition('from_number', $number)
+      ->addMetaData('account', user_load(1));
+    $result = $query->execute();
+    if (isset($result['ilao_sms_message'])) {
+      $ids = array_keys($result['ilao_sms_message']);
+      foreach ($ids as $key) {
+        $msg = entity_load_single('ilao_sms_message', $key);
+        entity_delete('ilao_sms_message', $key);
+      }
+    }
+
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'ilao_sms_message')
+      ->propertyCondition('to_number', $number)
+      ->addMetaData('account', user_load(1));
+    $result = $query->execute();
+    if (isset($result['ilao_sms_message'])) {
+      $ids = array_keys($result['ilao_sms_message']);
+      foreach ($ids as $key) {
+        $msg = entity_load_single('ilao_sms_message', $key);
+        entity_delete('ilao_sms_message', $key);
+      }
+    }
+  }
+
+}

@@ -1,0 +1,780 @@
+<?php
+/**
+ * Implements hook_entity_info().
+ */
+
+function ilao_sms_campaigns_entity_info()
+{
+  $return['ilao_sms_campaign'] = array(
+    'label' => t('Text campaigns'),
+    'entity class' => 'ILAOTextCampaign',
+    'controller class' => 'ILAOTextCampaignController',
+    'base table' => 'ilao_sms_campaign',
+    'fieldable' => FALSE,
+    'entity keys' => array(
+      'id' => 'campaign_id',
+    ),
+
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'ilao_sms_campaigns_create',
+    'access callback' => 'ilao_sms_campaigns_access',
+    'module' => 'ilao_sms_campaigns',
+
+  );
+  $return['ilao_sms_keyword'] = array(
+    'label' => t('Text campaign keywords'),
+    'entity class' => 'ILAOTextKeyword',
+    'controller class' => 'ILAOTextKeywordController',
+    'base table' => 'ilao_sms_keyword',
+    'fieldable' => FALSE,
+    'entity keys' => array(
+      'id' => 'keyword_id',
+    ),
+
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'ilao_sms_campaigns_keyword_create',
+    'access callback' => 'ilao_sms_campaigns_keyword_access',
+    'module' => 'ilao_sms_campaigns',
+
+  );
+  return $return;
+}
+
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function ilao_sms_campaigns_entity_property_info()
+{
+  $info = array();
+  $info['ilao_sms_campaign']['properties']['campaign_id'] = array(
+    'label' => t('ID'),
+    'description' => t('The ID of the campaign'),
+    'type' => 'ilao_sms_campaign',
+    'schema field' => 'campaign_id',
+  );
+  $info['ilao_sms_campaign']['properties']['name'] = array(
+    'label' => t('Campaign name'),
+    'description' => t('The name of the campaign'),
+    'type' => 'text',
+    'schema field' => 'name',
+  );
+  $info['ilao_sms_campaign']['properties']['status'] = array(
+    'label' => t('Status'),
+    'description' => t('The status of the campaign'),
+    'type' => 'boolean',
+    'schema field' => 'status',
+  );
+  $info['ilao_sms_campaign']['properties']['author'] = array(
+    'label' => t('Author'),
+    'description' => t('The author of the campaign'),
+    'type' => 'user',
+    'schema field' => 'uid',
+  );
+  $info['ilao_sms_campaign']['properties']['changed'] = array(
+    'label' => t('Updated'),
+    'description' => t('The date the campaign was last changed'),
+    'type' => 'date',
+    'schema field' => 'changed',
+  );
+  $info['ilao_sms_campaign']['properties']['created'] = array(
+    'label' => t('Created'),
+    'description' => t('The date the campaign was created'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+  $info['ilao_sms_keyword']['properties']['keyword_id'] = array(
+    'label' => t('ID'),
+    'description' => t('The ID of the keyword'),
+    'type' => 'ilao_sms_keyword',
+    'schema field' => 'keyword_id',
+  );
+  $info['ilao_sms_keyword']['properties']['entity_id'] = array(
+    'label' => t('Campaign'),
+    'description' => t('The campaign associated with the keyword'),
+    'type' => 'ilao_sms_campaign',
+    'schema field' => 'entity_id',
+  );
+  $info['ilao_sms_keyword']['properties']['message type'] = array(
+    'label' => t('Message type'),
+    'description' => t('Node or text '),
+    'type' => 'text',
+    'schema field' => 'message_type',
+  );
+  $info['ilao_sms_keyword']['properties']['message'] = array(
+    'label' => t('Message text'),
+    'description' => t('Text of the message'),
+    'type' => 'text',
+    'schema field' => 'message',
+  );
+  $info['ilao_sms_keyword']['properties']['nid'] = array(
+    'label' => t('Node id'),
+    'description' => t('Node associated with keyword'),
+    'type' => 'node',
+    'schema field' => 'nid',
+  );
+  $info['ilao_sms_campaign']['properties']['author'] = array(
+    'label' => t('Author'),
+    'description' => t('The author of the keyword'),
+    'type' => 'user',
+    'schema field' => 'uid',
+  );
+  $info['ilao_sms_keyword']['properties']['changed'] = array(
+    'label' => t('Updated'),
+    'description' => t('The date the keyword was last changed'),
+    'type' => 'date',
+    'schema field' => 'changed',
+  );
+  $info['ilao_sms_keyword']['properties']['created'] = array(
+    'label' => t('Created'),
+    'description' => t('The date the keyword was created'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+  $info['ilao_sms_keyword']['properties']['keyword'] = array(
+    'label' => t('Keyword'),
+    'description' => t('The keyword'),
+    'type' => 'text',
+    'schema field' => 'keyword',
+  );
+  $info['ilao_sms_keyword']['properties']['language'] = array (
+    'label' => t('Language'),
+    'description' => t('The language associated with the keyword'),
+    'type' => 'text',
+    'schema field' => 'language'
+  );
+  return $info;
+}
+
+
+/**
+ * Implements hook_access().
+ */
+function ilao_sms_campaigns_access()
+{
+  return user_access('administer campaigns');
+}
+
+function ilao_sms_campaigns_keyword_access()
+{
+  return user_access('administer campaign keywords');
+}
+
+/**
+ * Implements hook_permission().
+ */
+function ilao_sms_campaigns_permission()
+{
+  $permissions = array(
+    'administer campaigns' => array(
+      'title' => t('Administer campaigns'),
+      'description' => t('Add, delete, or edit campaigns'),
+    ),
+    'administer campaign keywords' => array(
+      'title' => t('Administer campaign keywords'),
+      'description' => t('Administer keywords for a campaign'),
+    )
+  );
+  return $permissions;
+}
+
+function ilao_sms_campaigns_load_multiple($campaign_ids = array(), $conditions = array(), $reset = FALSE)
+{
+  return entity_load('ilao_sms_campaign', $campaign_ids, $conditions, $reset);
+}
+
+
+/**
+ * Deletes a ilao_sms_campaign.
+ */
+function ilao_sms_campaigns_delete(ILAOTextCampaign $ilao_sms_campaign)
+{
+  $ilao_sms_campaign->delete();
+}
+
+/**
+ * Deletes a ilao_sms_keyword.
+ */
+function ilao_sms_campaigns_keyword_delete(ILAOTextKeyword $ilao_sms_keyword)
+{
+  $ilao_sms_keyword->delete();
+}
+
+
+/**
+ * Delete multiple ilao_sms_campaigns
+ *
+ * @param $ilao_sms_campaign_ids
+ *   An array of ilao_sms_campaign IDs.
+ */
+function ilao_sms_campaigns_delete_multiple(array $ilao_sms_campaign_ids)
+{
+  entity_get_controller('ilao_sms_campaign')->delete($ilao_sms_campaign_ids);
+}
+
+/**
+ * Delete multiple ilao_sms_keywords
+ *
+ * @param $ilao_sms_keyword_ids
+ *   An array of ilao_sms_keyword IDs.
+ */
+function ilao_sms_campaigns_keyword_delete_multiple(array $ilao_sms_keyword_ids)
+{
+  entity_get_controller('ilao_sms_keyword')->delete($ilao_sms_keyword_ids);
+}
+
+
+/**
+ * Create a ilao_sms_campaign object.
+ */
+function ilao_sms_campaigns_create($values = array())
+{
+  return entity_get_controller('ilao_sms_campaign')->create($values);
+}
+
+/**
+ * Create a ilao_sms_surveys object.
+ */
+function ilao_sms_campaigns_keyword_create($values = array())
+{
+  return entity_get_controller('ilao_sms_keyword')->create($values);
+}
+
+
+/**
+ * Saves a ilao_sms_campaign to the database.
+ *
+ * @param $ilao_sms_campaign
+ *   The ilao_sms_campaign object.
+ */
+function ilao_sms_campaigns_save(ILAOTextCampaign $ilao_sms_campaign)
+{
+  return $ilao_sms_campaign->save();
+}
+
+
+/**
+ * Saves a ilao_sms_keyword to the database.
+ *
+ * @param $ilao_sms_keyword
+ *   The ilao_sms_keyword object.
+ */
+function ilao_sms_campaigns_keyword_save(ILAOTextKeyword $ilao_sms_keyword)
+{
+  return $ilao_sms_keyword->save();
+}
+
+
+/**
+ * Menu title callback for showing individual entities
+ */
+function ilao_sms_campaign_page_title(ILAOTextCampaign $ilao_sms_campaign)
+{
+  return $ilao_sms_campaign->name;
+}
+
+
+/**
+ * Sets up content to show an individual ilao_sms_campaign
+ * @todo - get rid of drupal_set_title();
+ */
+function ilao_sms_campaign_page_view($ilao_sms_campaigns, $view_mode = 'full')
+{
+  /*  $controller = entity_get_controller('ilao_sms_campaign');
+    $content = $controller->view(array($ilao_sms_campaign->campaign_id => $ilao_sms_campaigns));
+    drupal_set_title($ilao_sms_campaign->name);
+    return $content;*/
+  $controller = entity_get_controller('ilao_sms_keyword');
+  $content = $controller->view(array($ilao_sms_keyword->keyword_id => $ilao_sms_keywords));
+  drupal_set_title($ilao_sms_keywords->keyword);
+  return $content;
+}
+
+/**
+ * Sets up content to show an individual ilao_sms_campaign
+ * @todo - get rid of drupal_set_title();
+ */
+function ilao_sms_campaign_keyword_page_view($ilao_sms_keywords, $view_mode = 'full')
+{
+  $controller = entity_get_controller('ilao_sms_keyword');
+  $content = $controller->view(array($ilao_sms_keyword->keyword_id => $ilao_sms_keywords));
+  drupal_set_title($ilao_sms_keywords->keyword);
+  return $content;
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function ilao_sms_campaigns_views_api()
+{
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'ilao_sms_campaigns') . '/views',
+  );
+}
+
+
+/**
+ * Implement hook_theme().
+ */
+function ilao_sms_campaigns_theme()
+{
+  return array(
+    'ilao_sms_campaign_add_list' => array(
+      'variables' => array('content' => array()),
+
+    ),
+    'ilao_sms_campaign' => array(
+      'render element' => 'elements',
+      'template' => 'ilao_sms_campaign',
+    ),
+    'ilao_sms_keyword_add_list' => array(
+      'variables' => array('content' => array()),
+
+    ),
+    'ilao_sms_keyword' => array(
+      'render element' => 'elements',
+      'template' => 'ilao_sms_keyword',
+    ),
+
+
+  );
+}
+
+/**
+ * The class used for Text campaign entities
+ */
+class ILAOTextCampaign extends Entity
+{
+  public function __construct(array $values)
+  {
+    parent::__construct($values, 'ilao_sms_campaign');
+  }
+
+  protected function defaultLabel()
+  {
+    return $this->campaign_id;
+  }
+
+}
+
+
+/**
+ * The Controller for Text campaign entities
+ */
+class ILAOTextCampaignController extends EntityAPIControllerExportable
+{
+  public function __construct($entityType)
+  {
+    parent::__construct($entityType);
+  }
+
+  /**
+   * Create a model type - we first set up the values that are specific
+   * to our model type schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the model.
+   *
+   * @return
+   *   A object with all default fields initialized.
+   */
+  public function create(array $values = array())
+  {
+
+    $values += array(
+      'survey_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'created' => REQUEST_TIME,
+      'changed' => REQUEST_TIME,
+    );
+    $campaign = parent::create($values);
+    return $campaign;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL)
+  {
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity, $transaction);
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array())
+  {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+
+    return $content;
+  }
+
+
+}
+
+
+/**
+ * The class used for Text campaign entities
+ */
+class ILAOTextKeyword extends Entity
+{
+  public function __construct(array $values)
+  {
+    parent::__construct($values, 'ilao_sms_keyword');
+  }
+
+  protected function defaultLabel()
+  {
+    return $this->keyword_id;
+  }
+
+}
+
+
+/**
+ * The Controller for Text campaign keyword entities
+ */
+class ILAOTextKeywordController extends EntityAPIControllerExportable
+{
+  public function __construct($entityType)
+  {
+    parent::__construct($entityType);
+  }
+
+  /**
+   * Create a model type - we first set up the values that are specific
+   * to our model type schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the model.
+   *
+   * @return
+   *   A object with all default fields initialized.
+   */
+  public function create(array $values = array())
+  {
+
+    $values += array(
+      'survey_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'created' => REQUEST_TIME,
+      'changed' => REQUEST_TIME,
+    );
+    $keyword = parent::create($values);
+    return $keyword;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL)
+  {
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity, $transaction);
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array())
+  {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+
+    return $content;
+  }
+
+
+}
+
+/**
+ * Implements hook_menu().
+ */
+function ilao_sms_campaigns_menu()
+{
+  $items['admin/sms/campaigns/add'] = array(
+    'title' => t('Add Campaign'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ilao_sms_campaigns_campaign_form'),
+    'access callback' => 'ilao_sms_campaigns_access',
+    'file' => 'ilao_sms_campaigns.ui.inc',
+    'file path' => drupal_get_path('module', 'ilao_sms_campaigns'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  $items['admin/sms/campaigns/%/edit'] = array(
+    'title' => t('Edit Campaign'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ilao_sms_campaigns_campaign_form',3),
+    'access callback' => 'ilao_sms_campaigns_access',
+    'file' => 'ilao_sms_campaigns.ui.inc',
+    'file path' => drupal_get_path('module', 'ilao_sms_campaigns'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  $items['admin/sms/keywords/add'] = array(
+    'title' => t('Add Campaign Keyword'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ilao_sms_campaigns_keyword_form'),
+    'access callback' => 'ilao_sms_campaigns_keyword_access',
+    'file' => 'ilao_sms_campaigns_keywords.ui.inc',
+    'file path' => drupal_get_path('module', 'ilao_sms_campaigns'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  $items['admin/sms/keywords/%/edit'] = array(
+    'title' => t('Edit Campaign Keyword'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ilao_sms_campaigns_keyword_form',3),
+    'access callback' => 'ilao_sms_campaigns_keyword_access',
+    'file' => 'ilao_sms_campaigns_keywords.ui.inc',
+    'file path' => drupal_get_path('module', 'ilao_sms_campaigns'),
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Gets the list of active campaigns.
+ *
+ * @return array
+ *   The list of active campaigns as an array.
+ */
+function ilao_sms_campaigns_load_active_campaigns() {
+  $options = array();
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'ilao_sms_campaign')
+    ->propertyCondition('status', 1)
+    // Run the query as user 1.
+    ->addMetaData('account', user_load(1));
+  $result = $query->execute();
+  foreach(current($result) as $key => $value) {
+    $campaign = entity_load_single('ilao_sms_campaign',$value->campaign_id);
+    $options[$campaign->campaign_id] = $campaign->name;
+  }
+  return $options;
+
+}
+
+/**
+ * Returns legal content to include in the keyword autocomplete.
+ *
+ * Returns only content of type legal content and that has not been excluded
+ * from SMS sharing on the node add/edit form.
+ *
+ * @return array
+ *   An array
+ */
+function ilao_sms_campaigns_load_legal_content_autocomplete() {
+  $options = array();
+  $subquery = db_select('field_data_field_content_access','ca');
+  $subquery->fields('ca',array('entity_id'));
+  $subquery->condition('entity_type','node','=');
+  $subquery->condition('bundle','legal_content','=');
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->propertyCondition('status', 1)
+    ->propertyCondition('nid',$subquery,'NOT IN')
+    ->entityCondition('bundle','legal_content')
+    ->fieldCondition('field_exclude_from_sms_content_s','value',0,'=')
+    // Run the query as user 1.
+    ->addMetaData('account', user_load(1));
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $items = entity_load('node', $items_nids);
+
+    foreach ($items as $value) {
+       $options[$value->nid] = $value->title_field['en'][0]['value'];
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Finds a keyword based on its name.
+ *
+ *
+ * @param $keyword
+ *  The keyword to find
+ * @param int $id
+ *   The keyword id.
+ * @return mixed
+ */
+function ilao_sms_campaigns_find_keyword_from_name($keyword, $id = 0) {
+  $keyword = strtolower($keyword);
+  $subquery = db_select('ilao_sms_campaign','c');
+  $subquery->fields('c',array('campaign_id'));
+  $subquery->condition('status',1);
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'ilao_sms_keyword')
+    ->propertyCondition('keyword',$keyword, '=')
+    ->propertyCondition('keyword_id',$id,'!=')
+    ->propertyCondition('entity_id',$subquery, 'IN')
+    ->propertyCondition('entity_type','ilao_sms_campaign','=')
+
+    // Run the query as user 1.
+    ->addMetaData('account', user_load(1));
+
+  $result = $query->execute();
+
+  return $result;
+}
+
+/**
+ * Loads a keyword based on its name.
+ *
+ * Loads the keyword if it is found.  If it is not found, it returns whether it
+ * is numeric or invalid.
+ *
+ * @param $keyword
+ *   The keyword.
+ * @return mixed|string
+ */
+
+function ilao_sms_campaigns_load_keyword_from_name($keyword) {
+  $result = ilao_sms_campaigns_find_keyword_from_name($keyword, 0);
+  $current = current(current($result));
+  if (!empty($result)) {
+    $keyword = entity_load_single('ilao_sms_keyword',$current->keyword_id);
+    return $keyword;
+  }
+  else {
+   if (is_numeric($keyword)) {
+     return 'numeric';
+   }
+   else {
+     return 'invalid';
+   }
+  }
+}
+
+/**
+ * Sends a campaign message.
+ *
+ * Loads the keyword's data, prepares the message to send, sends the message
+ * and logs the message.
+ *
+ * @param $sms
+ *   The incoming SMS array (number, twilio number, message).
+ * @param $campaign_keyword
+ *   The keyword.
+ */
+
+function ilao_sms_campaigns_send_message($sms, $campaign_keyword) {
+  $entity_type = 'ILAOTextKeyword';
+  $entity_id = $campaign_keyword->entity_id;
+  if ($campaign_keyword->message_type == 'text') {
+
+    $message = $campaign_keyword->message_text;
+    twilio_send($sms['number'],$message);
+    ilao_sms_campaigns_log_message_sent($sms,$message, $entity_type, $entity_id);
+  }
+  else {
+
+    if ($campaign_keyword->node_content_type == 'link') {
+      //send as link
+      $message = $campaign_keyword->node_prefix;
+      $message = $message .' ' .ilao_sms_create_link($campaign_keyword->nid, $campaign_keyword->language);
+      $message = $message .' ' .$campaign_keyword->node_suffix;
+
+      twilio_send($sms['number'],$message);
+      ilao_sms_campaigns_log_message_sent($sms,$message, $entity_type, $entity_id);
+
+    }
+    else {
+      $message = $campaign_keyword->node_prefix;
+      $message = $message ." \n" .ilao_sms_campaigns_create_text($campaign_keyword->nid, $campaign_keyword->language);
+      $message = $message ." \n" .$campaign_keyword->node_suffix;
+      ilao_sms_campaigns_log_message_sent($sms,$campaign_keyword->nid, $entity_type, $entity_id);
+      twilio_send($sms['number'],$message);
+
+    }
+  }
+}
+
+/**
+ * Creates SMS-friendly text from a node.
+ * @param $nid
+ *   Node ID to be converted to SMS text.
+ *
+ * @return mixed|string
+ */
+
+function ilao_sms_campaigns_create_text($nid, $language = 'en') {
+  $node = node_load($nid);
+  $response = ilao_sms_format_sms_from_node($node, $language);
+  return $response;
+}
+
+/**
+ * Returns a keyword not found message.
+ *
+ * @param $sms
+ *   Array of SMS values (number, from, message)
+ */
+
+function ilao_sms_campaigns_send_default($sms) {
+  $message = variable_get('ilao_sms_keyword_not_found');
+  if (empty($message)) {
+    $message = t('That keyword was not found. You can get free legal tools 24/7 at IllinoisLegalAid.org.');
+  }
+  twilio_send($sms['number'],$message);
+  ilao_sms_campaigns_log_message_sent($sms, $message, null, null);
+}
+
+/**
+ * Logs an sms message sent to the database.
+ *
+ * @param $sms
+ *   Twilio data structure (from, to, message)
+ *
+ * @param $message_sent
+ *   Text of the message sent.
+ *
+ * @param $entity_type
+ *   Entity type related to the message.
+ *
+ * @param $entity_id
+ *   Entity id related to the message.
+ */
+function ilao_sms_campaigns_log_message_sent($sms, $message_sent, $entity_type, $entity_id) {
+  $message = ilao_sms_message_create(array());
+  $message->from_number = $sms['number_twilio'];
+  $message->to_number = $sms['number'];
+  $message->message = $message_sent;
+  $message->message_type = 'Campaign';
+  $message->entity_type = $entity_type;
+  $message->entity_id = $entity_id;
+  ilao_sms_message_save($message);
+}
+
+/**
+ * Logs an sms message received to the database.
+ *
+ * @param $sms
+ *   Twilio data structure (from, to, message)
+ *
+ * @param $entity_type
+ *   Entity type related to the message.
+ *
+ * @param $entity_id
+ *   Entity id related to the message.
+ */
+
+function ilao_sms_campaigns_record_incoming($sms, $entity_type, $entity_id) {
+  $message = ilao_sms_message_create(array());
+  $message->to_number = $sms['number_twilio'];
+  $message->from_number = $sms['number'];
+  $message->message = $sms['message'];
+  $message->message_type = 'Campaign';
+  $message->entity_type = $entity_type;
+  $message->entity_id = $entity_id;
+  ilao_sms_message_save($message);
+}

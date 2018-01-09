@@ -1,0 +1,79 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: gdaniels
+ * Date: 5/17/17
+ * Time: 8:21 AM
+ */
+
+
+/**
+ * Implements hook_schema().
+ *
+ */
+function ilao_sms_surveys_schema()
+{
+  $schema = array();
+
+  $schema['ilao_sms_surveys'] = array(
+    'description' => 'The base table for survey entities.',
+    'fields' => array(
+      'survey_id' => array(
+        'description' => 'Primary Key: Identifier for a taken survey',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the entity was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the entity was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'entity_id' => array(
+        'description' => 'ID of the survey taker',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'entity_type' => array(
+        'description' => 'Entity type of the survey taker',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'nid' => array(
+        'description' => 'ID of the survey taken',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'submission_id' => array (
+        'description' => 'for webforms, the submission id',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'to_number' => array (
+        'description' => 'Phone number sent to',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => FALSE,
+      )
+
+    ),
+    'primary key' => array('survey_id'),
+  );
+  return $schema;
+}
