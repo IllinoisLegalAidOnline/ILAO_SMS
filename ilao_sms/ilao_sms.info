@@ -4,3 +4,4 @@ package = ILAO
 version = 1.0
 core = 7.x
 files[] = ilao_sms.ui.inc
+dependencies[] = entity
