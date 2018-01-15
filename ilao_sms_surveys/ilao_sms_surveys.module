@@ -280,14 +280,12 @@ function ilao_sms_surveys_load_question($node, $component_id) {
  */
 function ilao_sms_surveys_process_survey_incoming($number, $number_twilio, $message, $question) {
 
-  watchdog('sms-ilao','Executing the process survey incoming', array(), WATCHDOG_NOTICE);
   ilao_sms_surveys_save_message($number, $number_twilio, $message, 'survey response');
   $nid = ilao_sms_surveys_get_survey_by_type($question->message_type);
   $node = node_load($nid);
 
   $last_question = ilao_sms_surveys_get_component_id_by_label($question->message, $node);
   $count = ilao_sms_surveys_get_component_count($node);
-  watchdog('sms-ilao','The last question was @cid of @count', array('@cid' => $last_question, '@count' => $count), WATCHDOG_NOTICE);
 
   if ($last_question == $count && 1 == 0) {
     // do we need to update a survey object?
@@ -298,7 +296,6 @@ function ilao_sms_surveys_process_survey_incoming($number, $number_twilio, $mess
   }
   else {
     $next = ilao_sms_surveys_get_next_question($node, $last_question, $message);
-    watchdog('sms-ilao','Next is @next', array ('@next' => $next), WATCHDOG_NOTICE);
      if (!empty($next)) {
       // need to actually send the next question.
       //ilao_sms_surveys_send_survey()
@@ -328,7 +325,6 @@ function ilao_sms_surveys_process_survey_incoming($number, $number_twilio, $mess
  */
 function ilao_sms_surveys_send_survey_question($node, $number, $cid) {
   $question = ilao_sms_surveys_load_question($node, $cid);
-  watchdog('ilao-sms','the question is @question', array('@question' => $question), WATCHDOG_NOTICE);
   if (!empty($question)) {
     ilao_sms_surveys_save_message(variable_get('twilio_number'), $number, $question, $node->field_survey_type[LANGUAGE_NONE][0]['value']);
     twilio_send($number, $question);
@@ -361,11 +357,10 @@ function ilao_sms_surveys_get_next_question($node, $component, $response) {
   $has_conditionals = ilao_sms_surveys_has_conditions($node, $component, $response);
   if (empty($has_conditionals)) {
     $next = $component + 1;
-   watchdog('ilao-sms','No conditions; Component was @component; now is $next for nid @nid',array ('@component' => $component, 'next' => $next, '@nid' => $node->nid));
+
   }
   else {
     $next = $has_conditionals;
-    watchdog('ilao-sms','Has conditions; Component was @component; now is $next for nid @nid',array ('@component' => $component, 'next' => $next, '@nid' => $node->nid));
   }
 
 
@@ -474,7 +469,7 @@ function ilao_sms_surveys_get_survey_by_type($type) {
     ->fetchAssoc();
 
   if (!empty($query)) {
-    watchdog('ilao-sms','For @type the entity id is @id',array('@type' => $type, '@id' => $query['entity_id']), WATCHDOG_NOTICE);
+
     return $query['entity_id'];
   }
   return null;
@@ -542,9 +537,7 @@ function ilao_sms_surveys_save_webform($node, $number) {
   $ended = $object->changed;
   //save the survey to webform
   $saved_survey_id = ilao_sms_surveys_save_webform_submission($node, $webform_result, $started, $ended);
-  watchdog('survey','Saved survey id is @saved', array('@saved' => $saved_survey_id), WATCHDOG_NOTICE);
   $survey_id = ilao_sms_surveys_get_survey_id_from_phone($number,$node->field_survey_type[LANGUAGE_NONE][0]['value']);
-  watchdog('survey','Saved survey object id is @saved', array('@saved' => $survey_id), WATCHDOG_NOTICE);
   $survey = entity_load_single('ilao_sms_surveys',$survey_id);
   $survey->submission_id = $saved_survey_id;
   $survey->save();

@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ilao_sms_views feature.
+ */
+
+include_once 'ilao_sms_views.features.inc';

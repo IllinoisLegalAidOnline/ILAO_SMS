@@ -323,16 +323,8 @@ class ILAOTextMessageController extends EntityAPIControllerExportable {
 
 
 function ilao_sms_check_mode() {
-  $host = $_SERVER['HTTP_HOST'];
-  if (stripos($host,'ilao.dev') !== FALSE) {
-    $mode = variable_get('ilao_sms_demo_local');
-  }
-  if (stripos($host,'dev.ill') !== FALSE) {
-    $mode = variable_get('ilao_sms_demo_dev');
-  }
-  if (stripos($host,'staging.ill') !== FALSE) {
-    $mode = variable_get('ilao_sms_demo_staging');
-  }
+
+    $mode = variable_get('ilao_sms_demo_mode');
   if ($mode == 1) {
     return 'demo';
   }

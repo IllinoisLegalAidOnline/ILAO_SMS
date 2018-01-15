@@ -155,10 +155,4 @@ function ilao_sms_campaigns_schema()
   return $schema;
 }
 
-/**
- * Implements hook_update_N().
- */
-function ilao_sms_campaigns_update_7001() {
-  module_enable(array('views_field_view'));
-}
 

@@ -7,7 +7,7 @@
  * @param $id
  * @return mixed
  */
-function ilao_sms_campaigns_campaign_form($form, &$form_state, $id) {
+function ilao_sms_campaigns_campaign_form($form, &$form_state, $id = NULL) {
   if (!empty($id)) {
     $entity = entity_load_single('ilao_sms_campaign',$id);
     $form['is_new'] = array(

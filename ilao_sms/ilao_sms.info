@@ -7,3 +7,4 @@ files[] = ilao_sms.ui.inc
 dependencies[] = entity
 dependencies[] = views
 dependencies[] = shurly
+

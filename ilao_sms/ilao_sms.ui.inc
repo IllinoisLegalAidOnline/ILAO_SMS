@@ -26,21 +26,12 @@ function ilao_sms_form($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $form['ilao_sms_demo_local'] = array (
-    '#type' => 'checkbox',
-    '#title' => t('Run in demo mode for ilao.dev.dd'),
-    '#default_value'=> variable_get('ilao_sms_demo_local'),
-   );
-  $form['ilao_sms_demo_dev'] = array (
+  $form['ilao_sms_demo_mode'] = array (
     '#type' => 'checkbox',
     '#title' => t('Run in demo mode for dev.illinoislegalaid.org'),
     '#default_value'=> variable_get('ilao_sms_demo_dev'),
   );
-  $form['ilao_sms_demo_staging'] = array (
-    '#type' => 'checkbox',
-    '#title' => t('Run in demo mode for staging.illinoislegalaid.org'),
-    '#default_value'=> variable_get('ilao_sms_demo_staging'),
-  );
+
   $form['ilao_sms_demo_phone'] = array (
     '#type' => 'textfield',
     '#title' => t('Demo telephone number to use'),
@@ -60,12 +51,7 @@ function ilao_sms_form($form, &$form_state) {
     '#required' => TRUE,
     '#default_value' => variable_get('ilao_sms_content_survey_send'),
   );
-/*
-  $form['ilao_test_survey'] = array (
-    '#type' => 'textfield',(
-    '#title' => 'Survey NID',
-  );
- */
+
 
 
 
